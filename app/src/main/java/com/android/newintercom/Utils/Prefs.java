@@ -22,7 +22,6 @@ import android.util.Log;
 import android.view.Window;
 import android.widget.Toast;
 
-
 import com.android.newintercom.R;
 
 import java.net.NetworkInterface;

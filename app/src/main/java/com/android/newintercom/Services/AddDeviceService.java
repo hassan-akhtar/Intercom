@@ -8,9 +8,6 @@ import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.android.newintercom.Activities.MainActivity;
-import com.android.newintercom.Models.Devices;
-import com.android.newintercom.Utils.MyApplication;
 import com.android.newintercom.Utils.SharedPreferencesManager;
 
 import java.io.IOException;
