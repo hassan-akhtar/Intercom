@@ -10,6 +10,7 @@ import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.util.Log;
 
+
 import com.android.newintercom.Utils.BroadcastCall;
 import com.android.newintercom.Utils.SharedPreferencesManager;
 
@@ -83,7 +84,8 @@ public class UDPBroadcastService extends Service {
                                 String data = new String(buffer, 0, packet.getLength());
                                 Log.e(LOG_TAG, "Packet received from " + packet.getAddress() + " with contents: " + data);
                                 if ("broadcast".equals(data)) {
-                                    broadcastCall = new BroadcastCall(InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP)));
+                                    broadcastCall = new BroadcastCall(InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP)),
+                                            sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP));
                                     broadcastCall.startCall();
                                 } else if ("endbroadcast".equals(data)) {
                                     if (null!=broadcastCall) {

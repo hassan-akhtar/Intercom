@@ -5,10 +5,6 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
-import android.media.audiofx.AcousticEchoCanceler;
-import android.media.audiofx.AutomaticGainControl;
-import android.media.audiofx.NoiseSuppressor;
-import android.os.Build;
 import android.util.Log;
 
 import java.io.IOException;
@@ -21,7 +17,7 @@ import java.net.UnknownHostException;
 public class BroadcastCall {
 
     private static final String LOG_TAG = "BroadcastCall";
-    private static final int SAMPLE_RATE = 11025; // Hertz
+    private static final int SAMPLE_RATE = 8000; // Hertz
     private static final int SAMPLE_INTERVAL = 50; // Milliseconds
     private static final int SAMPLE_SIZE = 2; // Bytes
     //private static final int BUF_SIZE = SAMPLE_INTERVAL * SAMPLE_INTERVAL * SAMPLE_SIZE * 2; //Bytes
@@ -29,10 +25,12 @@ public class BroadcastCall {
     private int port = 50666; // Port the packets are addressed to
     private boolean mic = false; // Enable mic?
     private boolean speakers = false; // Enable speakers?
+    private String ownAddress = "";
 
-    public BroadcastCall(InetAddress address) {
+    public BroadcastCall(InetAddress address, String ownAddress) {
 
         this.address = address;
+        this.ownAddress = ownAddress;
     }
 
     public void startCall() {
@@ -66,25 +64,19 @@ public class BroadcastCall {
             @Override
             public void run() {
                 // Create an instance of the AudioRecord class
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
+                //  android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
                 mic = true;
 /*                int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
                         AudioFormat.CHANNEL_IN_MONO,
                         AudioFormat.ENCODING_PCM_16BIT);*/
 
-                int bufferSize =4096;
+                int bufferSize = 4096;
 
 
                 Log.e(LOG_TAG, "Send thread started. Thread id: " + Thread.currentThread().getId());
-                AudioRecord audioRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
+                AudioRecord audioRecorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, SAMPLE_RATE,
                         AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
                         bufferSize);
-
-                if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    AcousticEchoCanceler.create(audioRecorder.getAudioSessionId());
-                    NoiseSuppressor.create(audioRecorder.getAudioSessionId());
-                    AutomaticGainControl.create(audioRecorder.getAudioSessionId());
-                }
 
                 audioRecorder.startRecording();
 
@@ -99,13 +91,14 @@ public class BroadcastCall {
                     while (mic) {
                         // Capture audio from the mic and transmit it
                         bytes_read = audioRecorder.read(buf, 0, buf.length);
-                        if (0<bytes_read) {
+                        if (0 < bytes_read) {
                             DatagramPacket packet = new DatagramPacket(buf, bytes_read, address, port);
-                            Log.e("Mic:", "buf  "+buf );
-                            Log.e("Mic:", "bufferSize)  "+bufferSize );
-                            Log.e("Mic:", "buf.length  "+buf.length );
-                            Log.e("Mic:", "bytes_read  "+bytes_read );
-                            Log.e("Mic:", "packet.getLength()  "+packet.getLength() );
+                            Log.e("Mic:", "buf  " + buf);
+                            Log.e("Mic:", "Addressss  " + packet.getAddress());
+                            Log.e("Mic:", "bufferSize)  " + bufferSize);
+                            Log.e("Mic:", "buf.length  " + buf.length);
+                            Log.e("Mic:", "bytes_read  " + bytes_read);
+                            Log.e("Mic:", "packet.getLength()  " + packet.getLength());
                             socket.send(packet);
                             bytes_sent += bytes_read;
                             Log.e(LOG_TAG, "Total bytes sent: " + bytes_sent);
@@ -147,12 +140,12 @@ public class BroadcastCall {
 
                 @Override
                 public void run() {
-                    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
+                    //android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
 /*                int bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE,
                         AudioFormat.CHANNEL_IN_MONO,
                         AudioFormat.ENCODING_PCM_16BIT);*/
 
-                    int bufferSize =4096;
+                    int bufferSize = 4096;
 
 
                     // Create an instance of AudioTrack, used for playing back audio
@@ -168,12 +161,17 @@ public class BroadcastCall {
                             // Play back the audio received from packets
                             DatagramPacket packet = new DatagramPacket(buf, bufferSize);
                             socket.receive(packet);
+                            if (!packet.getAddress().toString().equals("/"+ownAddress)) {
                             Log.e(LOG_TAG, "Packet received: " + packet.getLength());
-                            track.write(packet.getData(), 0, bufferSize);
-                            Log.e("Speaker:", "buf  "+buf );
-                            Log.e("Speaker:", "bufferSize)  "+bufferSize );
-                            Log.e("Speaker:", "buf.length  "+buf.length );
-                            Log.e("Speaker:", "packet.getLength()  "+packet.getLength() );
+                            track.write(packet.getData(), 0, packet.getLength());
+                            Log.e("Speaker:", "buf  " + buf);
+                            Log.e("Speaker:", "Addressss  " + packet.getAddress());
+                            Log.e("Speaker:", "bufferSize)  " + bufferSize);
+                            Log.e("Speaker:", "buf.length  " + buf.length);
+                            Log.e("Speaker:", "packet.getLength()  " + packet.getLength());
+                            }else{
+                                Log.e("Speaker:", "Itss mee nigga  " + packet.getAddress());
+                            }
 
 
                         }
@@ -196,6 +194,8 @@ public class BroadcastCall {
                     }
                 }
             });
+
+
             receiveThread.start();
         }
     }
