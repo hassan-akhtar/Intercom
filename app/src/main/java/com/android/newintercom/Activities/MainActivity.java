@@ -317,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
                                     try {
                                         Thread.sleep(1000);
                                         InetAddress broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
-                                        broadcastCall = new BroadcastCall(broadcastAddress, sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP));
+                                        broadcastCall = new BroadcastCall(MainActivity.this,broadcastAddress, sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP));
                                         broadcastCall.startCall();
                                     } catch (UnknownHostException e) {
                                         e.printStackTrace();

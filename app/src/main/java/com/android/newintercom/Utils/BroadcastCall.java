@@ -1,5 +1,6 @@
 package com.android.newintercom.Utils;
 
+import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -26,11 +27,15 @@ public class BroadcastCall {
     private boolean mic = false; // Enable mic?
     private boolean speakers = false; // Enable speakers?
     private String ownAddress = "";
+    Context mContext;
+    SharedPreferencesManager sharedPreferencesManager;
 
-    public BroadcastCall(InetAddress address, String ownAddress) {
+    public BroadcastCall(Context context, InetAddress address, String ownAddress) {
 
         this.address = address;
         this.ownAddress = ownAddress;
+        this.mContext = context;
+        sharedPreferencesManager = new SharedPreferencesManager(mContext);
     }
 
     public void startCall() {
@@ -161,7 +166,7 @@ public class BroadcastCall {
                             // Play back the audio received from packets
                             DatagramPacket packet = new DatagramPacket(buf, bufferSize);
                             socket.receive(packet);
-                            if (!packet.getAddress().toString().equals("/"+ownAddress)) {
+                            if (!packet.getAddress().toString().equals("/"+ownAddress) && !sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_DND)) {
                             Log.e(LOG_TAG, "Packet received: " + packet.getLength());
                             track.write(packet.getData(), 0, packet.getLength());
                             Log.e("Speaker:", "buf  " + buf);

@@ -2,6 +2,7 @@ package com.android.newintercom.Services;
 
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -32,10 +33,12 @@ public class UDPBroadcastService extends Service {
     private static final int SAMPLE_RATE = 44100; // Hertz
     private boolean LISTEN = true;
     private BroadcastCall broadcastCall;
+    Context mContext;
 
 
     @Override
     public void onCreate() {
+        mContext = this;
         sharedPreferencesManager = new SharedPreferencesManager(this);
     }
 
@@ -84,7 +87,7 @@ public class UDPBroadcastService extends Service {
                                 String data = new String(buffer, 0, packet.getLength());
                                 Log.e(LOG_TAG, "Packet received from " + packet.getAddress() + " with contents: " + data);
                                 if ("broadcast".equals(data)) {
-                                    broadcastCall = new BroadcastCall(InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP)),
+                                    broadcastCall = new BroadcastCall(mContext,InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP)),
                                             sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP));
                                     broadcastCall.startCall();
                                 } else if ("endbroadcast".equals(data)) {
