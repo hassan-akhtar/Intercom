@@ -11,11 +11,8 @@ import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-
-
 import com.android.newintercom.Utils.BroadcastCall;
 import com.android.newintercom.Utils.SharedPreferencesManager;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;

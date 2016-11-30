@@ -291,12 +291,14 @@ public class MainActivity extends AppCompatActivity {
 
                         tvBroadcastReceiving.setVisibility(View.VISIBLE);
                         tvBroadcastReceiving.setText("Receiving broadcast from: "+name);
+                        cbBroadcast.setEnabled(false);
                     } else {
                         Log.e(TAG, "Itssss Meeeeeeee ");
                     }
                 }else {
                     if (!myIp.equals(ipAddress)) {
                         tvBroadcastReceiving.setVisibility(View.GONE);
+                        cbBroadcast.setEnabled(true);
                     } else {
                         Log.e(TAG, "Itssss Meeeeeeee ");
                     }
