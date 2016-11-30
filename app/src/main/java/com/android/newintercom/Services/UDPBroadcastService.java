@@ -9,6 +9,7 @@ import android.media.AudioRecord;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 
@@ -34,7 +35,9 @@ public class UDPBroadcastService extends Service {
     private boolean LISTEN = true;
     private BroadcastCall broadcastCall;
     Context mContext;
-
+    static final public String BROADCAST_RECEIVER = "com.android.newintercom.Services.BROADCAST_RECEIVER";
+    static final public String IP = "com.android.newintercom.Services.IP";
+    static final public String MSG = "com.android.newintercom.Services.MSG";
 
     @Override
     public void onCreate() {
@@ -90,10 +93,14 @@ public class UDPBroadcastService extends Service {
                                     broadcastCall = new BroadcastCall(mContext,InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP)),
                                             sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP));
                                     broadcastCall.startCall();
+                                    sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_RECEIVING_BROADCAST,true);
+                                    sendResult(packet.getAddress().toString(),"bbb");
                                 } else if ("endbroadcast".equals(data)) {
                                     if (null!=broadcastCall) {
                                         broadcastCall.endCall();
                                     }
+                                    sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_RECEIVING_BROADCAST,false);
+                                    sendResult(packet.getAddress().toString(),"eee");
                                 }
                             }else {
                                Log.e(LOG_TAG, "is meeeeeeee");
@@ -117,6 +124,18 @@ public class UDPBroadcastService extends Service {
         listenThread.start();
     }
 
+
+    public void sendResult(String ip ,String msg){
+        Intent in = new Intent(BROADCAST_RECEIVER);
+
+        if(ip!=null){
+            LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
+            in.putExtra(MSG,msg);
+            in.putExtra(IP,ip);
+            broadcastManager.sendBroadcast(in);
+        }
+
+    }
     private InetAddress getBroadcastIp() {
         // Function to return the broadcast address, based on the IP address of the device
         try {

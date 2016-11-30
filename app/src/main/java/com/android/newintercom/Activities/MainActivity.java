@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     ListView lvDevices;
     SharedPreferencesManager sharedPreferencesManager;
     String TAG = "MainActivity:";
-    TextView tvDeviceName, tvDeviceIp, tvNoTextFound, tvBroadcast;
+    TextView tvDeviceName, tvDeviceIp, tvNoTextFound, tvBroadcast, tvBroadcastReceiving;
     private ConnectivityManager connMgr;
     protected NetInfo net = null;
     protected String info_ip_str = "";
@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int BROADCAST_PORT_DND = 50011; // Socket on which packets are sent/received
     private boolean BROADCAST = true;
     //InetAddress broadcastAddress;
-    BroadcastReceiver addReceiver, updateDnDReceiver;
+    BroadcastReceiver addReceiver, updateDnDReceiver, broadcastReceiver;
     private BroadcastCall broadcastCall;
 
     @Override
@@ -177,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
         tvDeviceIp = (TextView) findViewById(R.id.tvDeviceIp);
         tvNoTextFound = (TextView) findViewById(R.id.tvNoTextFound);
         tvBroadcast = (TextView) findViewById(R.id.tvBroadcast);
+        tvBroadcastReceiving= (TextView) findViewById(R.id.tvBroadcastReceiving);
 
     }
 
@@ -195,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 Log.e(TAG, "onReceive Add: ");
                 String name = intent.getStringExtra(AddDeviceService.My_MSG);
+                String ipAddress = intent.getStringExtra(AddDeviceService.My_IP);
                 if (!sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME).equals(name)) {
 
                     boolean isadded = false;
@@ -207,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     if (!isadded) {
-                        Devices devices = new Devices(name, false);
+                        Devices devices = new Devices(name,ipAddress, false);
                         devicesList.add(devices);
                         adapter.notifyDataSetChanged();
                         Log.e("addDevice", "Device Added");
@@ -241,6 +243,7 @@ public class MainActivity extends AppCompatActivity {
 
                 String name = intent.getStringExtra(DnDService.NAME);
                 String status = intent.getStringExtra(DnDService.STATUS);
+                String ipAddress = intent.getStringExtra(DnDService.IP);
 
                 if (!sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME).equals(name)) {
                     boolean value = false;
@@ -250,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
                     for (Devices d : devicesList) {
                         if (d.getName().equals(name)) {
                             devicesList.remove(d);
-                            Devices devices = new Devices(name, value);
+                            Devices devices = new Devices(name,ipAddress, value);
                             devicesList.add(devices);
                             adapter.notifyDataSetChanged();
                             Log.e("removeDevice", "Device Removed");
@@ -264,11 +267,50 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String ipAddress = intent.getStringExtra(UDPBroadcastService.IP);
+                String msg = intent.getStringExtra(UDPBroadcastService.MSG);
+                String name ="";
+                String myIp = "/"+sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP);
+
+                if("bbb".equals(msg)){
+
+                    if (!myIp.equals(ipAddress)) {
+
+                        for (Devices d : devicesList) {
+                            if (d.getIpAddress().equals(ipAddress)) {
+
+                                name=d.getName();
+                                break;
+                            }
+
+                        }
+
+                        tvBroadcastReceiving.setVisibility(View.VISIBLE);
+                        tvBroadcastReceiving.setText("Receiving broadcast from: "+name);
+                    } else {
+                        Log.e(TAG, "Itssss Meeeeeeee ");
+                    }
+                }else {
+                    if (!myIp.equals(ipAddress)) {
+                        tvBroadcastReceiving.setVisibility(View.GONE);
+                    } else {
+                        Log.e(TAG, "Itssss Meeeeeeee ");
+                    }
+                }
+            }
+        };
+
+
         sDnD.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
                 if (isChecked) {
+                    tvBroadcastReceiving.setVisibility(View.GONE);
                     InetAddress broadcastAddress = null;
                     try {
                         broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
@@ -283,6 +325,9 @@ public class MainActivity extends AppCompatActivity {
                     llDevices.setVisibility(View.GONE);
                     rlHeader.setBackgroundColor(getResources().getColor(R.color.red));
                 } else {
+                    if(sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_RECEIVING_BROADCAST)){
+                        tvBroadcastReceiving.setVisibility(View.VISIBLE);
+                    }
                     InetAddress broadcastAddress = null;
                     try {
                         broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
@@ -432,7 +477,7 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
     }
 
-    private void prepareListData() {
+/*    private void prepareListData() {
 
         devicesList.clear();
 
@@ -447,7 +492,7 @@ public class MainActivity extends AppCompatActivity {
 
         adapter.notifyDataSetChanged();
 
-    }
+    }*/
 
 
     void getCurrentIp() {
@@ -567,6 +612,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStart();
         LocalBroadcastManager.getInstance(this).registerReceiver((addReceiver), new IntentFilter(AddDeviceService.My_RESULT));
         LocalBroadcastManager.getInstance(this).registerReceiver((updateDnDReceiver), new IntentFilter(DnDService.DND_RECEIVER));
+        LocalBroadcastManager.getInstance(this).registerReceiver((broadcastReceiver), new IntentFilter(UDPBroadcastService.BROADCAST_RECEIVER));
 
     }
 

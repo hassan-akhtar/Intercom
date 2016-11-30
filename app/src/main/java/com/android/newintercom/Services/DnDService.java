@@ -20,6 +20,7 @@ public class DnDService extends Service {
     static final public String DND_RECEIVER = "com.android.newintercom.Services.DND_RECEIVER";
     static final public String NAME = "com.android.newintercom.Services.NAME";
     static final public String STATUS = "com.android.newintercom.Services.STATUS";
+    static final public String IP = "com.android.newintercom.Services.IP";
 
     DatagramSocket socket;
 
@@ -41,11 +42,11 @@ public class DnDService extends Service {
             if (action.equals("DND:")) {
                 Log.e(TAG, "Listener received ADD request");
               //  MainActivity.updateDnDStatus(new Devices(data.substring(4, data.length()), true));
-                sendResult(data.substring(4, data.length()),"true");
+                sendResult(data.substring(4, data.length()),packet.getAddress().toString(),"true");
             } else  if (action.equals("DDD:")) {
                 Log.e(TAG, "Listener received ADD request");
                 //MainActivity.updateDnDStatus(new Devices(data.substring(4, data.length()), false));
-                sendResult(data.substring(4, data.length()),"false");
+                sendResult(data.substring(4, data.length()),packet.getAddress().toString(),"false");
             } else {
                 Log.w(TAG, "Listener received invalid request: " + action);
             }
@@ -94,13 +95,14 @@ public class DnDService extends Service {
     }
 
 
-    public void sendResult(String name, String status){
+    public void sendResult(String name,String ipAddress, String status){
         Intent in = new Intent(DND_RECEIVER);
 
         if(name!=null){
             LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
             in.putExtra(NAME,name);
             in.putExtra(STATUS,status);
+            in.putExtra(IP,ipAddress);
             broadcastManager.sendBroadcast(in);
         }
 

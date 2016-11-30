@@ -26,6 +26,7 @@ public class AddDeviceService extends Service {
     DatagramSocket socket;
     static final public String My_RESULT = "com.android.newintercom.Services.PROCESSED";
     static final public String My_MSG = "com.android.newintercom.Services.MY_MSG";
+    static final public String My_IP = "com.android.newintercom.Services.MY_IP";
 
     private void listenAndWaitAndThrowIntent(InetAddress broadcastIP, Integer port) throws Exception {
         byte[] recvBuf = new byte[1500];
@@ -45,7 +46,7 @@ public class AddDeviceService extends Service {
             if (action.equals("ADD:")) {
                 Log.e(TAG, "Listener received ADD request");
                // MainActivity.addDevice(new Devices(data.substring(4, data.length()), false));
-                sendResult(data.substring(4, data.length()));
+                sendResult(data.substring(4, data.length()),packet.getAddress().toString());
             } else {
                 Log.w(TAG, "Listener received invalid request: " + action);
             }
@@ -93,12 +94,13 @@ public class AddDeviceService extends Service {
         }
     }
 
-    public void sendResult(String message){
+    public void sendResult(String message, String ipAddress){
         Intent in = new Intent(My_RESULT);
 
         if(message!=null){
             LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(this);
             in.putExtra(My_MSG,message);
+            in.putExtra(My_IP,ipAddress);
             broadcastManager.sendBroadcast(in);
         }
 
