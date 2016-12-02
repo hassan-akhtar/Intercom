@@ -6,6 +6,10 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.media.audiofx.AcousticEchoCanceler;
+import android.media.audiofx.AutomaticGainControl;
+import android.media.audiofx.NoiseSuppressor;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.IOException;
@@ -61,6 +65,7 @@ public class BroadcastCall {
         speakers = false;
     }
 
+
     public void startMic() {
         // Creates the thread for capturing and transmitting audio
 
@@ -76,12 +81,22 @@ public class BroadcastCall {
                         AudioFormat.ENCODING_PCM_16BIT);*/
 
                 int bufferSize = 4096;
-
+                int playBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT);
 
                 Log.e(LOG_TAG, "Send thread started. Thread id: " + Thread.currentThread().getId());
+
                 AudioRecord audioRecorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, SAMPLE_RATE,
                         AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
                         bufferSize);
+
+
+
+                if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                    AcousticEchoCanceler.create(audioRecorder.getAudioSessionId());
+                    NoiseSuppressor.create(audioRecorder.getAudioSessionId());
+                    AutomaticGainControl.create(audioRecorder.getAudioSessionId());
+                }
 
                 audioRecorder.startRecording();
 
@@ -97,10 +112,10 @@ public class BroadcastCall {
                         // Capture audio from the mic and transmit it
                         bytes_read = audioRecorder.read(buf, 0, buf.length);
                         if (0 < bytes_read) {
+
                             DatagramPacket packet = new DatagramPacket(buf, bytes_read, address, port);
-                            Log.e("Mic:", "buf  " + buf);
                             Log.e("Mic:", "Addressss  " + packet.getAddress());
-                            Log.e("Mic:", "bufferSize)  " + bufferSize);
+                            Log.e("Mic:", "bufferSize  " + bufferSize);
                             Log.e("Mic:", "buf.length  " + buf.length);
                             Log.e("Mic:", "bytes_read  " + bytes_read);
                             Log.e("Mic:", "packet.getLength()  " + packet.getLength());
@@ -151,12 +166,13 @@ public class BroadcastCall {
                         AudioFormat.ENCODING_PCM_16BIT);*/
 
                     int bufferSize = 4096;
-
+                    int playBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
+                            AudioFormat.ENCODING_PCM_16BIT);
 
                     // Create an instance of AudioTrack, used for playing back audio
                     Log.e(LOG_TAG, "Receive thread started. Thread id: " + Thread.currentThread().getId());
                     AudioTrack track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
-                            AudioFormat.ENCODING_PCM_16BIT, bufferSize, AudioTrack.MODE_STREAM);
+                            AudioFormat.ENCODING_PCM_16BIT, playBufSize, AudioTrack.MODE_STREAM);
                     track.play();
                     try {
                         // Define a socket to receive the audio
@@ -166,15 +182,15 @@ public class BroadcastCall {
                             // Play back the audio received from packets
                             DatagramPacket packet = new DatagramPacket(buf, bufferSize);
                             socket.receive(packet);
-                            if (!packet.getAddress().toString().equals("/"+ownAddress) && !sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_DND)) {
-                            Log.e(LOG_TAG, "Packet received: " + packet.getLength());
-                            track.write(packet.getData(), 0, packet.getLength());
-                            Log.e("Speaker:", "buf  " + buf);
-                            Log.e("Speaker:", "Addressss  " + packet.getAddress());
-                            Log.e("Speaker:", "bufferSize)  " + bufferSize);
-                            Log.e("Speaker:", "buf.length  " + buf.length);
-                            Log.e("Speaker:", "packet.getLength()  " + packet.getLength());
-                            }else{
+                            if (!packet.getAddress().toString().equals("/" + ownAddress) && !sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_DND)) {
+                                Log.e(LOG_TAG, "Packet received: " + packet.getLength());
+                                track.write(packet.getData(), 0, packet.getLength());
+                                Log.e("Speaker:", "Addressss  " + packet.getAddress());
+                                Log.e("Speaker:", "playBufSize  " + playBufSize);
+                                Log.e("Speaker:", "bufferSize  " + bufferSize);
+                                Log.e("Speaker:", "buf.length  " + buf.length);
+                                Log.e("Speaker:", "packet.getLength()  " + packet.getLength());
+                            } else {
                                 Log.e("Speaker:", "Itss mee nigga  " + packet.getAddress());
                             }
 

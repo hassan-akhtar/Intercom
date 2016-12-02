@@ -13,6 +13,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -115,10 +116,10 @@ public class MainActivity extends AppCompatActivity {
 
         if (sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_BROADCAST)) {
             cbBroadcast.setChecked(true);
-            llDevices.setVisibility(View.GONE);
+            tvBroadcast.setVisibility(View.VISIBLE);
         } else {
             cbBroadcast.setChecked(false);
-            llDevices.setVisibility(View.VISIBLE);
+            tvBroadcast.setVisibility(View.GONE);
         }
 
         if (sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_DND)) {
@@ -163,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         llSetDeviceName = (LinearLayout) findViewById(R.id.llSetDeviceName);
         rlHeader = (RelativeLayout) findViewById(R.id.rlHeader);
         llDevices = (LinearLayout) findViewById(R.id.llDevices);
@@ -353,7 +354,6 @@ public class MainActivity extends AppCompatActivity {
                     if (isChecked) {
                         tvBroadcast.setVisibility(View.VISIBLE);
                         sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, true);
-                        llDevices.setVisibility(View.GONE);
                         sendBroadcastMessage("broadcast");
 
                         Thread thread = new Thread(new Runnable() {
@@ -381,7 +381,6 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         tvBroadcast.setVisibility(View.GONE);
                         sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, false);
-                        llDevices.setVisibility(View.VISIBLE);
                         sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_ME, false);
                         sendBroadcastMessage("endbroadcast");
                         broadcastCall.endCall();
