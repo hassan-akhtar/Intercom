@@ -23,7 +23,7 @@ public class BroadcastCall {
 
     private static final String LOG_TAG = "BroadcastCall";
     private static final int SAMPLE_RATE = 8000; // Hertz
-    private static final int SAMPLE_INTERVAL = 50; // Milliseconds
+    private static final int SAMPLE_INTERVAL = 200; // Milliseconds
     private static final int SAMPLE_SIZE = 2; // Bytes
     //private static final int BUF_SIZE = SAMPLE_INTERVAL * SAMPLE_INTERVAL * SAMPLE_SIZE * 2; //Bytes
     private InetAddress address; // Address to call
@@ -33,6 +33,10 @@ public class BroadcastCall {
     private String ownAddress = "";
     Context mContext;
     SharedPreferencesManager sharedPreferencesManager;
+    AudioManager am ;
+    AcousticEchoCanceler acousticEchoCanceler;
+    NoiseSuppressor noiseSuppressor;
+    AutomaticGainControl automaticGainControl;
 
     public BroadcastCall(Context context, InetAddress address, String ownAddress) {
 
@@ -40,6 +44,7 @@ public class BroadcastCall {
         this.ownAddress = ownAddress;
         this.mContext = context;
         sharedPreferencesManager = new SharedPreferencesManager(mContext);
+        am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
     }
 
     public void startCall() {
@@ -86,18 +91,40 @@ public class BroadcastCall {
 
                 Log.e(LOG_TAG, "Send thread started. Thread id: " + Thread.currentThread().getId());
 
-                AudioRecord audioRecorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION, SAMPLE_RATE,
+                AudioRecord audioRecorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE,
                         AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
                         bufferSize);
 
 
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        if(AcousticEchoCanceler.isAvailable()) {
+                            acousticEchoCanceler = AcousticEchoCanceler.create(audioRecorder.getAudioSessionId());
+                            if (null!=acousticEchoCanceler) {
+                                acousticEchoCanceler.setEnabled(true);
+                            }
+                        }
 
-                if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                    AcousticEchoCanceler.create(audioRecorder.getAudioSessionId());
-                    NoiseSuppressor.create(audioRecorder.getAudioSessionId());
-                    AutomaticGainControl.create(audioRecorder.getAudioSessionId());
+                        if(NoiseSuppressor.isAvailable()) {
+                            noiseSuppressor = NoiseSuppressor.create(audioRecorder.getAudioSessionId());
+                            if (null!=noiseSuppressor) {
+                                noiseSuppressor.setEnabled(true);
+                            }
+                        }
+
+                        if(AutomaticGainControl.isAvailable()) {
+                            automaticGainControl = AutomaticGainControl.create(audioRecorder.getAudioSessionId());
+                            if (null!=automaticGainControl) {
+                                automaticGainControl.setEnabled(true);
+                            }
+                        }
+                    }
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
                 }
 
+
+                am.setMode(AudioManager.MODE_IN_COMMUNICATION);
                 audioRecorder.startRecording();
 
                 int bytes_read = 0;
@@ -111,8 +138,8 @@ public class BroadcastCall {
                     while (mic) {
                         // Capture audio from the mic and transmit it
                         bytes_read = audioRecorder.read(buf, 0, buf.length);
-                        if (0 < bytes_read) {
-
+                        if (0 < bytes_read ) {
+                            if (!sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_DND)) {
                             DatagramPacket packet = new DatagramPacket(buf, bytes_read, address, port);
                             Log.e("Mic:", "Addressss  " + packet.getAddress());
                             Log.e("Mic:", "bufferSize  " + bufferSize);
@@ -122,10 +149,14 @@ public class BroadcastCall {
                             socket.send(packet);
                             bytes_sent += bytes_read;
                             Log.e(LOG_TAG, "Total bytes sent: " + bytes_sent);
-                            //Thread.sleep(SAMPLE_INTERVAL, 0);
+                            Thread.sleep(SAMPLE_INTERVAL, 0);
+                            } else {
+                                Log.e("Speaker:", "Dnd on nigga  ");
+                            }
                         }
                     }
                     // Stop recording and release resources
+                    am.setMode(AudioManager.MODE_NORMAL);
                     audioRecorder.stop();
                     audioRecorder.release();
                     socket.disconnect();
@@ -144,6 +175,8 @@ public class BroadcastCall {
 
                     Log.e(LOG_TAG, "IOException: " + e.toString());
                     mic = false;
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -173,6 +206,12 @@ public class BroadcastCall {
                     Log.e(LOG_TAG, "Receive thread started. Thread id: " + Thread.currentThread().getId());
                     AudioTrack track = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
                             AudioFormat.ENCODING_PCM_16BIT, playBufSize, AudioTrack.MODE_STREAM);
+                    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                        AcousticEchoCanceler.create(track.getAudioSessionId());
+                        NoiseSuppressor.create(track.getAudioSessionId());
+                        AutomaticGainControl.create(track.getAudioSessionId());
+                    }
+                    am.setMode(AudioManager.MODE_IN_COMMUNICATION);
                     track.play();
                     try {
                         // Define a socket to receive the audio
@@ -197,6 +236,7 @@ public class BroadcastCall {
 
                         }
                         // Stop playing back and release resources
+                        am.setMode(AudioManager.MODE_NORMAL);
                         socket.disconnect();
                         socket.close();
                         track.stop();

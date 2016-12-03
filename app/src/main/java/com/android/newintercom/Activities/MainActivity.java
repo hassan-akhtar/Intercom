@@ -71,13 +71,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean BROADCAST = true;
     //InetAddress broadcastAddress;
     BroadcastReceiver addReceiver, updateDnDReceiver, broadcastReceiver;
-    private BroadcastCall broadcastCall;
+    public static BroadcastCall broadcastCall;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
 
 
         initViews();
@@ -158,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
-            broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME),broadcastAddress );
+            broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
         }
 
     }
@@ -178,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         tvDeviceIp = (TextView) findViewById(R.id.tvDeviceIp);
         tvNoTextFound = (TextView) findViewById(R.id.tvNoTextFound);
         tvBroadcast = (TextView) findViewById(R.id.tvBroadcast);
-        tvBroadcastReceiving= (TextView) findViewById(R.id.tvBroadcastReceiving);
+        tvBroadcastReceiving = (TextView) findViewById(R.id.tvBroadcastReceiving);
 
     }
 
@@ -210,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     if (!isadded) {
-                        Devices devices = new Devices(name,ipAddress, false);
+                        Devices devices = new Devices(name, ipAddress, false);
                         devicesList.add(devices);
                         adapter.notifyDataSetChanged();
                         Log.e("addDevice", "Device Added");
@@ -254,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
                     for (Devices d : devicesList) {
                         if (d.getName().equals(name)) {
                             devicesList.remove(d);
-                            Devices devices = new Devices(name,ipAddress, value);
+                            Devices devices = new Devices(name, ipAddress, value);
                             devicesList.add(devices);
                             adapter.notifyDataSetChanged();
                             Log.e("removeDevice", "Device Removed");
@@ -274,29 +273,29 @@ public class MainActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 String ipAddress = intent.getStringExtra(UDPBroadcastService.IP);
                 String msg = intent.getStringExtra(UDPBroadcastService.MSG);
-                String name ="";
-                String myIp = "/"+sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP);
+                String name = "";
+                String myIp = "/" + sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP);
 
-                if("bbb".equals(msg)){
+                if ("bbb".equals(msg)) {
 
                     if (!myIp.equals(ipAddress)) {
 
                         for (Devices d : devicesList) {
                             if (d.getIpAddress().equals(ipAddress)) {
 
-                                name=d.getName();
+                                name = d.getName();
                                 break;
                             }
 
                         }
 
                         tvBroadcastReceiving.setVisibility(View.VISIBLE);
-                        tvBroadcastReceiving.setText("Receiving broadcast from: "+name);
+                        tvBroadcastReceiving.setText("Receiving broadcast from: " + name);
                         cbBroadcast.setEnabled(false);
                     } else {
                         Log.e(TAG, "Itssss Meeeeeeee ");
                     }
-                }else {
+                } else {
                     if (!myIp.equals(ipAddress)) {
                         tvBroadcastReceiving.setVisibility(View.GONE);
                         cbBroadcast.setEnabled(true);
@@ -328,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
                     llDevices.setVisibility(View.GONE);
                     rlHeader.setBackgroundColor(getResources().getColor(R.color.red));
                 } else {
-                    if(sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_RECEIVING_BROADCAST)){
+                    if (sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_RECEIVING_BROADCAST)) {
                         tvBroadcastReceiving.setVisibility(View.VISIBLE);
                     }
                     InetAddress broadcastAddress = null;
@@ -350,41 +349,42 @@ public class MainActivity extends AppCompatActivity {
         cbBroadcast.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-               // if (sharedPreferencesManager.getBoolean(SharedPreferencesManager.PERMISSION_RECORD_AUDIO)) {
-                    if (isChecked) {
-                        tvBroadcast.setVisibility(View.VISIBLE);
-                        sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, true);
-                        sendBroadcastMessage("broadcast");
+                // if (sharedPreferencesManager.getBoolean(SharedPreferencesManager.PERMISSION_RECORD_AUDIO)) {
+                if (isChecked) {
+                    tvBroadcast.setVisibility(View.VISIBLE);
+                    sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, true);
+                    sendBroadcastMessage("broadcast");
 
-                        Thread thread = new Thread(new Runnable() {
+                    Thread thread = new Thread(new Runnable() {
 
-                            @Override
-                            public void run() {
+                        @Override
+                        public void run() {
+                            try {
                                 try {
-                                    try {
-                                        Thread.sleep(1000);
-                                        InetAddress broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
-                                        broadcastCall = new BroadcastCall(MainActivity.this,broadcastAddress, sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP));
-                                        broadcastCall.startCall();
-                                    } catch (UnknownHostException e) {
-                                        e.printStackTrace();
-                                    }
-                                } catch (Exception e) {
+                                    InetAddress broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
+                                    broadcastCall = new BroadcastCall(MainActivity.this, broadcastAddress, sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP));
+                                    Thread.sleep(500);
+                                    broadcastCall.startCall();
+                                } catch (UnknownHostException e) {
                                     e.printStackTrace();
                                 }
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
-                        });
+                        }
+                    });
 
-                        thread.start();
+                    thread.start();
 
 
-                    } else {
-                        tvBroadcast.setVisibility(View.GONE);
-                        sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, false);
-                        sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_ME, false);
-                        sendBroadcastMessage("endbroadcast");
-                        broadcastCall.endCall();
-                    }
+                } else {
+                    tvBroadcast.setVisibility(View.GONE);
+                    sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, false);
+                    sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_ME, false);
+                    sendBroadcastMessage("endbroadcast");
+                    broadcastCall.endCall();
+
+                }
                 /*} else {
                     Permiso.getInstance().requestPermissions(new Permiso.IOnPermissionResult() {
                         @Override
