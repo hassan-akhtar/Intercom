@@ -33,7 +33,7 @@ public class BroadcastCall {
     private String ownAddress = "";
     Context mContext;
     SharedPreferencesManager sharedPreferencesManager;
-    AudioManager am ;
+    AudioManager am;
     AcousticEchoCanceler acousticEchoCanceler;
     NoiseSuppressor noiseSuppressor;
     AutomaticGainControl automaticGainControl;
@@ -98,23 +98,23 @@ public class BroadcastCall {
 
                 try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        if(AcousticEchoCanceler.isAvailable()) {
+                        if (AcousticEchoCanceler.isAvailable()) {
                             acousticEchoCanceler = AcousticEchoCanceler.create(audioRecorder.getAudioSessionId());
-                            if (null!=acousticEchoCanceler) {
+                            if (null != acousticEchoCanceler) {
                                 acousticEchoCanceler.setEnabled(true);
                             }
                         }
 
-                        if(NoiseSuppressor.isAvailable()) {
+                        if (NoiseSuppressor.isAvailable()) {
                             noiseSuppressor = NoiseSuppressor.create(audioRecorder.getAudioSessionId());
-                            if (null!=noiseSuppressor) {
+                            if (null != noiseSuppressor) {
                                 noiseSuppressor.setEnabled(true);
                             }
                         }
 
-                        if(AutomaticGainControl.isAvailable()) {
+                        if (AutomaticGainControl.isAvailable()) {
                             automaticGainControl = AutomaticGainControl.create(audioRecorder.getAudioSessionId());
-                            if (null!=automaticGainControl) {
+                            if (null != automaticGainControl) {
                                 automaticGainControl.setEnabled(true);
                             }
                         }
@@ -122,9 +122,6 @@ public class BroadcastCall {
                 } catch (IllegalStateException e) {
                     e.printStackTrace();
                 }
-
-
-                am.setMode(AudioManager.MODE_IN_COMMUNICATION);
                 audioRecorder.startRecording();
 
                 int bytes_read = 0;
@@ -138,25 +135,24 @@ public class BroadcastCall {
                     while (mic) {
                         // Capture audio from the mic and transmit it
                         bytes_read = audioRecorder.read(buf, 0, buf.length);
-                        if (0 < bytes_read ) {
+                        if (0 < bytes_read) {
                             if (!sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_DND)) {
-                            DatagramPacket packet = new DatagramPacket(buf, bytes_read, address, port);
-                            Log.e("Mic:", "Addressss  " + packet.getAddress());
-                            Log.e("Mic:", "bufferSize  " + bufferSize);
-                            Log.e("Mic:", "buf.length  " + buf.length);
-                            Log.e("Mic:", "bytes_read  " + bytes_read);
-                            Log.e("Mic:", "packet.getLength()  " + packet.getLength());
-                            socket.send(packet);
-                            bytes_sent += bytes_read;
-                            Log.e(LOG_TAG, "Total bytes sent: " + bytes_sent);
-                            Thread.sleep(SAMPLE_INTERVAL, 0);
+                                DatagramPacket packet = new DatagramPacket(buf, bytes_read, address, port);
+                                Log.e("Mic:", "Addressss  " + packet.getAddress());
+                                Log.e("Mic:", "bufferSize  " + bufferSize);
+                                Log.e("Mic:", "buf.length  " + buf.length);
+                                Log.e("Mic:", "bytes_read  " + bytes_read);
+                                Log.e("Mic:", "packet.getLength()  " + packet.getLength());
+                                socket.send(packet);
+                                bytes_sent += bytes_read;
+                                Log.e(LOG_TAG, "Total bytes sent: " + bytes_sent);
+                                Thread.sleep(SAMPLE_INTERVAL, 0);
                             } else {
                                 Log.e("Speaker:", "Dnd on nigga  ");
                             }
                         }
                     }
                     // Stop recording and release resources
-                    am.setMode(AudioManager.MODE_NORMAL);
                     audioRecorder.stop();
                     audioRecorder.release();
                     socket.disconnect();
@@ -211,7 +207,6 @@ public class BroadcastCall {
                         NoiseSuppressor.create(track.getAudioSessionId());
                         AutomaticGainControl.create(track.getAudioSessionId());
                     }
-                    am.setMode(AudioManager.MODE_IN_COMMUNICATION);
                     track.play();
                     try {
                         // Define a socket to receive the audio
@@ -236,7 +231,6 @@ public class BroadcastCall {
 
                         }
                         // Stop playing back and release resources
-                        am.setMode(AudioManager.MODE_NORMAL);
                         socket.disconnect();
                         socket.close();
                         track.stop();

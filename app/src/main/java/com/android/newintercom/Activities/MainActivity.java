@@ -151,13 +151,22 @@ public class MainActivity extends AppCompatActivity {
             startService(new Intent(MainActivity.this, DnDService.class));
             startService(new Intent(MainActivity.this, UDPBroadcastService.class));
             //getBroadcastIp();
-            InetAddress broadcastAddress = null;
-            try {
-                broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            }
-            broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    InetAddress broadcastAddress = null;
+                    try {
+                        broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                    broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+                }
+            });
+
+            thread.start();
+
         }
 
     }
@@ -220,13 +229,20 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
                         //getBroadcastIp();
-                        InetAddress broadcastAddress = null;
-                        try {
-                            broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
-                        } catch (UnknownHostException e) {
-                            e.printStackTrace();
-                        }
-                        broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+                        Thread thread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                InetAddress broadcastAddress = null;
+                                try {
+                                    broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
+                                } catch (UnknownHostException e) {
+                                    e.printStackTrace();
+                                }
+                                broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+                            }
+                        });
+                        thread.start();
+
                     } else {
                         Log.i("addDevice", "Device Exists");
                     }
@@ -313,13 +329,20 @@ public class MainActivity extends AppCompatActivity {
 
                 if (isChecked) {
                     tvBroadcastReceiving.setVisibility(View.GONE);
-                    InetAddress broadcastAddress = null;
-                    try {
-                        broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                    }
-                    broadcastDnD("DND:", sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+
+                    Thread thread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            InetAddress broadcastAddress = null;
+                            try {
+                                broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
+                            } catch (UnknownHostException e) {
+                                e.printStackTrace();
+                            }
+                            broadcastDnD("DND:", sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+                        }
+                    });
+                    thread.start();
                     sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_DND, true);
                     sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, false);
                     cbBroadcast.setChecked(false);
@@ -330,13 +353,20 @@ public class MainActivity extends AppCompatActivity {
                     if (sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_RECEIVING_BROADCAST)) {
                         tvBroadcastReceiving.setVisibility(View.VISIBLE);
                     }
-                    InetAddress broadcastAddress = null;
-                    try {
-                        broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                    }
-                    broadcastDnD("DDD:", sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+
+                    Thread thread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            InetAddress broadcastAddress = null;
+                            try {
+                                broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
+                            } catch (UnknownHostException e) {
+                                e.printStackTrace();
+                            }
+                            broadcastDnD("DDD:", sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+                        }
+                    });
+                    thread.start();
                     sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_DND, false);
                     cbBroadcast.setEnabled(true);
                     llDevices.setVisibility(View.VISIBLE);
@@ -458,13 +488,20 @@ public class MainActivity extends AppCompatActivity {
                         startService(new Intent(MainActivity.this, UDPBroadcastService.class));
                         //getBroadcastIp();
                         getCurrentIp();
-                        InetAddress broadcastAddress = null;
-                        try {
-                            broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
-                        } catch (UnknownHostException e) {
-                            e.printStackTrace();
-                        }
-                        broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+                        Thread thread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                InetAddress broadcastAddress = null;
+                                try {
+                                    broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
+                                } catch (UnknownHostException e) {
+                                    e.printStackTrace();
+                                }
+                                broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+                            }
+                        });
+                        thread.start();
+
                     }
 
                     break;
@@ -515,17 +552,30 @@ public class MainActivity extends AppCompatActivity {
                                 R.string.net_mode_wifi, net.speed, WifiInfo.LINK_SPEED_UNITS));*/
                         Log.e(TAG, "IP: " + "" + info_ip_str);// 3G// WIFI
                         sharedPreferencesManager.setString(SharedPreferencesManager.MY_IP, info_ip_str);
-                        sharedPreferencesManager.setString(SharedPreferencesManager.BROADCAST_IP, info_ip_str.substring(0, 9) + ".255");
+
+                        String ipp = info_ip_str.replace(".","-");
+                        String[] first = ipp.split("-");
+                        String frst = first[0];
+                        String scnd = first[1];
+                        String thrd = first[2];
+                        sharedPreferencesManager.setString(SharedPreferencesManager.BROADCAST_IP, frst + "." + scnd + "." + thrd + ".255");
+                        Log.e(TAG, "getCurrentIp: "+frst + "." + scnd + "." + thrd + ".255" );
                     }
                 } else if (type == 3 || type == 9) { // ETH
                     net.getIp();
                     //info_ip_str = getString(R.string.net_ip, net.ip, net.cidr, net.intf);
                     info_ip_str = getString(R.string.net_ip_simple, net.ip);
                     sharedPreferencesManager.setString(SharedPreferencesManager.MY_IP, info_ip_str);
-                    sharedPreferencesManager.setString(SharedPreferencesManager.BROADCAST_IP, info_ip_str.substring(0, 9) + ".255");
-                    showToast("Ethernet connectivity detected!");
-                    showToast("IP: " + "" + info_ip_str);// 3G// WIFI
+                    String ipp = info_ip_str.replace(".","-");
+                    String[] first = ipp.split("-");
+                    String frst = first[0];
+                    String scnd = first[1];
+                    String thrd = first[2];
+                    sharedPreferencesManager.setString(SharedPreferencesManager.BROADCAST_IP, frst + "." + scnd + "." + thrd + ".255");
+                    //showToast("Ethernet connectivity detected!");
+                    // showToast("IP: " + "" + info_ip_str);// 3G// WIFI
                     Log.e(TAG, "Ethernet connectivity detected!");
+                    Log.e(TAG, "getCurrentIp: "+frst + "." + scnd + "." + thrd + ".255" );
                     Log.e(TAG, "IP: " + "" + info_ip_str);// 3G// WIFI
                 } else {
                     Log.e(TAG, "Connectivity unknown!");
@@ -623,13 +673,20 @@ public class MainActivity extends AppCompatActivity {
         //startService(new Intent(MainActivity.this, RemoveDeviceService.class));
         startService(new Intent(MainActivity.this, DnDService.class));
         getCurrentIp();
-        InetAddress broadcastAddress = null;
-        try {
-            broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-        broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                InetAddress broadcastAddress = null;
+                try {
+                    broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
+                broadcastName(sharedPreferencesManager.getString(SharedPreferencesManager.MY_NAME), broadcastAddress);
+            }
+        });
+        thread.start();
+
         super.onRestart();
     }
 
