@@ -21,7 +21,7 @@ public class SharedPreferencesManager {
     public static final String MY_NAME = "own_name";
     public static final String IS_ME = "isme";
     public static final String BROADCAST_IP = "b_ip";
-    public static final String IS_BROADCAST = "isbroadcast";
+   // public static final String IS_BROADCAST = "isbroadcast";
     public static final String PERMISSION_RECORD_AUDIO = "perRec";
     public static final String IS_RECEIVING_BROADCAST = "isReceiving";
 

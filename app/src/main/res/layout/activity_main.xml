@@ -124,7 +124,7 @@
             android:layout_height="2px"
             android:background="@color/colorPrimaryDark"/>
 
-        <CheckBox
+        <Button
             android:id="@+id/cbBroadcast"
             android:layout_marginTop="5dp"
             android:layout_width="wrap_content"
@@ -134,7 +134,7 @@
 
         <Switch
             android:id="@+id/sDnD"
-            android:layout_marginTop="7dp"
+            android:layout_marginTop="17dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"

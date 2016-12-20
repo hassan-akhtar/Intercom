@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -51,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout llSetDeviceName, llMain, llDevices;
     EditText etDeviceName;
     Button btnStartApp;
-    CheckBox cbBroadcast;
+    Button cbBroadcast;
     Switch sDnD;
     ListView lvDevices;
     SharedPreferencesManager sharedPreferencesManager;
@@ -113,17 +114,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-        if (sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_BROADCAST)) {
+/*        if (sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_BROADCAST)) {
             cbBroadcast.setChecked(true);
             tvBroadcast.setVisibility(View.VISIBLE);
         } else {
             cbBroadcast.setChecked(false);
             tvBroadcast.setVisibility(View.GONE);
-        }
+        }*/
 
         if (sharedPreferencesManager.getBoolean(SharedPreferencesManager.IS_DND)) {
             sDnD.setChecked(true);
-            sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, false);
+            //sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, false);
             cbBroadcast.setEnabled(false);
             llDevices.setVisibility(View.GONE);
             rlHeader.setBackgroundColor(getResources().getColor(R.color.red));
@@ -179,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
         llMain = (LinearLayout) findViewById(R.id.llMain);
         etDeviceName = (EditText) findViewById(R.id.etDeviceName);
         btnStartApp = (Button) findViewById(R.id.btnStartApp);
-        cbBroadcast = (CheckBox) findViewById(R.id.cbBroadcast);
+        cbBroadcast = (Button) findViewById(R.id.cbBroadcast);
         sDnD = (Switch) findViewById(R.id.sDnD);
         lvDevices = (ListView) findViewById(R.id.lvDevices);
         tvDeviceName = (TextView) findViewById(R.id.tvDeviceName);
@@ -344,8 +345,8 @@ public class MainActivity extends AppCompatActivity {
                     });
                     thread.start();
                     sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_DND, true);
-                    sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, false);
-                    cbBroadcast.setChecked(false);
+                   // sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_BROADCAST, false);
+                   // cbBroadcast.setChecked(false);
                     cbBroadcast.setEnabled(false);
                     llDevices.setVisibility(View.GONE);
                     rlHeader.setBackgroundColor(getResources().getColor(R.color.red));
@@ -376,6 +377,49 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        cbBroadcast.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        // PRESSED
+                        tvBroadcast.setVisibility(View.VISIBLE);
+                        sendBroadcastMessage("broadcast");
+
+                        Thread thread = new Thread(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                try {
+                                    try {
+                                        InetAddress broadcastAddress = InetAddress.getByName(sharedPreferencesManager.getString(SharedPreferencesManager.BROADCAST_IP));
+                                        broadcastCall = new BroadcastCall(MainActivity.this, broadcastAddress, sharedPreferencesManager.getString(SharedPreferencesManager.MY_IP));
+                                        Thread.sleep(500);
+                                        broadcastCall.startCall();
+                                    } catch (UnknownHostException e) {
+                                        e.printStackTrace();
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+
+                        thread.start();
+                        return true; // if you want to handle the touch event
+                    case MotionEvent.ACTION_UP:
+                        // RELEASED
+                        tvBroadcast.setVisibility(View.GONE);
+                        sharedPreferencesManager.setBoolean(SharedPreferencesManager.IS_ME, false);
+                        sendBroadcastMessage("endbroadcast");
+                        broadcastCall.endCall();
+                        return true; // if you want to handle the touch event
+                }
+                return false;
+            }
+        });
+/*
         cbBroadcast.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -415,7 +459,7 @@ public class MainActivity extends AppCompatActivity {
                     broadcastCall.endCall();
 
                 }
-                /*} else {
+                *//*} else {
                     Permiso.getInstance().requestPermissions(new Permiso.IOnPermissionResult() {
                         @Override
                         public void onPermissionResult(Permiso.ResultSet resultSet) {
@@ -429,10 +473,10 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onRationaleRequested(Permiso.IOnRationaleProvided callback, String... permissions) {
                         }
-                    }, Manifest.permission.RECORD_AUDIO);*/
+                    }, Manifest.permission.RECORD_AUDIO);*//*
                 //}
             }
-        });
+        });*/
     }
 
     private void sendBroadcastMessage(final String message) {
